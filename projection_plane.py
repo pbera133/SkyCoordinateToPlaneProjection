@@ -1,21 +1,25 @@
 ## This is program to project sky coordinate to a plane [2018 Nov 01]
-##pbera.phy@gmail.com
+## Introduced the shift of coordinate in the midpoint calculation, required due to the default return of arctan/arccos [2018 Nov 21] 
+## pbera.phy@gmail.com
 ###########################################
 import numpy as np
 import pylab as pl
 
-DEC = 1.0
-RA = 1.0
+DEC = -1.0
+RA = 2.0
+
+if (abs(DEC)>0.5*np.pi):
+	print '** abs(DEC) should be less than 0.5*np.pi !!'
 
 delta_theta = 0.1
 delta_phi = 0.1
 
 ## 1st Source :: S1
-S1_theta = DEC - 0.5*delta_theta
+S1_theta = (0.5*np.pi - DEC) - 0.5*delta_theta
 S1_phi = RA - 0.5*delta_phi
 
 ## 2nd Source :: S2
-S2_theta = DEC + 0.5*delta_theta
+S2_theta = (0.5*np.pi - DEC) + 0.5*delta_theta
 S2_phi = RA + 0.5*delta_phi
 
 ## Assumed distance between S1 and S2 on the projected plane
@@ -24,11 +28,24 @@ D_S1S2 = 2.0
 ## Certesian coordinate of the midpoint between the sorces S1 and S2 on the unit sphere
 Xa = 0.5*(np.sin(S1_theta)*np.cos(S1_phi)+np.sin(S2_theta)*np.cos(S2_phi))
 Ya = 0.5*(np.sin(S1_theta)*np.sin(S1_phi)+np.sin(S2_theta)*np.sin(S2_phi))
+#Za = 0.5*(S1_theta/abs(S1_theta)*np.cos(S1_theta) + S2_theta/abs(S2_theta)*np.cos(S2_theta))
+
 Za = 0.5*(np.cos(S1_theta) + np.cos(S2_theta))
 
 ## Angular coordinate of the mid point bteween S1 & S2, The projected plane will be tangent to the sphere of a specified radius
 Sa_theta = np.arccos(Za/(Xa*Xa+Ya*Ya+Za*Za)**0.5)
 Sa_phi = np.arctan(Ya/Xa)
+
+if (Za<-0.0):
+	Sa_theta = Sa_theta-np.pi
+
+if (Ya>0.0 and Sa_phi<0.0): ## Shift mid point to the second quardent if required
+	Sa_phi = np.pi + Sa_phi
+
+if (Ya<0.0 and Sa_phi>0.0):
+	Sa_phi = np.pi + Sa_phi
+
+print 'mid point', Sa_theta, Sa_phi
 
 ## Distance of the sources S1 and S2
 r0 = D_S1S2/((np.sin(S1_theta)*np.cos(S1_phi)-np.sin(S2_theta)*np.cos(S2_phi))**2 + (np.sin(S1_theta)*np.sin(S1_phi)-np.sin(S2_theta)*np.sin(S2_phi))**2 + (np.cos(S1_theta) - np.cos(S2_theta))**2)**0.5
